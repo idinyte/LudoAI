@@ -1,9 +1,9 @@
 import ludopy
 import numpy as np
 import cv2
-import QLearningAgent
+import pickle
 
-def train(episodes, players, learning_rate, discount_factor, epsilon, decay, render_environment = False):
+def test(episodes, players, agent):
     assert 2 <= players <= 4, "There must be between 2 and 4 players"
 
     if players == 2:
@@ -13,9 +13,9 @@ def train(episodes, players, learning_rate, discount_factor, epsilon, decay, ren
     elif players == 4:
         g = ludopy.Game(ghost_players=[])
     
-    agent = QLearningAgent(0, learning_rate, discount_factor)
-    
-    for episode in range(episodes):
+    wins = 0
+
+    for episode in range(1, episodes + 1):
         there_is_a_winner = False
         g.reset()
         while not there_is_a_winner:
@@ -23,26 +23,28 @@ def train(episodes, players, learning_rate, discount_factor, epsilon, decay, ren
             (dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i = obs
 
             if len(move_pieces):
-                piece_to_move = agent.update(dice, move_pieces, g.players) if player_i == agent.player_idx  else move_pieces[np.random.randint(0, len(move_pieces))]
+                piece_to_move = agent.update(dice, move_pieces, g.players) if player_i == agent.player_i  else move_pieces[np.random.randint(0, len(move_pieces))]
             else:
                 piece_to_move = -1
-
+            
             new_obs = g.answer_observation(piece_to_move)
             _, _, _, _, player_is_a_winner, there_is_a_winner = new_obs
-            
-            if render_environment:
-                enviroment_image_rgb = g.render_environment() # RGB image of the enviroment
-                enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
-                cv2.imshow("Enviroment", enviroment_image_bgr)
-                cv2.waitKey(50)
+                
+        if g.first_winner_was == agent.player_i:
+            wins += 1
 
-episode = 300
+        
+        if episode % 100 == 0:
+            print(f"episode: {episode}")
+            print(f"win rate: {100*wins/episode}%")
+            
+    print(f"final win rate: {100*wins/episodes}%")
+
+episodes = 10000
 players = 2
-learning_rate = 0.4
-discount_factor = 0.4 # importance of future rewards
-epsilon = 0.99
-decay = 0.01
-train(100, 4, learning_rate, discount_factor, epsilon, decay)
+with open('pretrained/q_learning_agent.pkl', 'rb') as file:
+    agent = pickle.load(file)
+test(episodes, players, agent)
 
 
 cv2.destroyAllWindows()
