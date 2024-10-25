@@ -1,0 +1,4 @@
+1000 games have been playd q_agent_players_4_winrate_0.662.pkl
+winrate_2p=85.1% 
+winrate_3p=75.5% 
+winrate_4p=67.3%

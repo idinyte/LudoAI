@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from Qlearning.stateSpace import State, Action
+import sys
 
 class Rewards():
     rewards_table, q_table = None, None
@@ -31,16 +32,21 @@ class Rewards():
         self.rewards_table[Action.UNSAFE_Die.value] = -1.2
         self.rewards_table[Action.UNSAFE_GoalZone.value] = 1
         self.rewards_table[Action.UNSAFE_Finish.value] = 2
-        self.q_table = np.array([self.rewards_table.copy()*0.01 for _ in range(states)])
+        self.q_table = np.array([self.rewards_table.copy() for _ in range(states)])
 
     def get_next_action(self, action_table):
+        # rounded_q_table = [[round(cell, 2) for cell in row] for row in self.q_table]
+        # for row in rounded_q_table:
+        #     print(" & ".join([str(cell) for cell in row]))
+        # sys.exit(1)
         q_table_options = np.multiply(self.q_table, action_table)
     
-        if random.uniform(0, 1) < self.epsilon_greedy:
-            non_nan_state_actions = np.argwhere(~np.isnan(action_table))
-            state, action = non_nan_state_actions[np.random.randint(0, len(non_nan_state_actions))]
-        else:
-            state, action = np.unravel_index(np.nanargmax(q_table_options), q_table_options.shape)
+        # if random.uniform(0, 1) < self.epsilon_greedy:
+        #     non_nan_state_actions = np.argwhere(~np.isnan(action_table))
+        #     state, action = non_nan_state_actions[np.random.randint(0, len(non_nan_state_actions))]
+        # else:
+        #     
+        state, action = np.unravel_index(np.nanargmax(q_table_options), q_table_options.shape)
 
         return state, action
     
@@ -48,9 +54,10 @@ class Rewards():
         self.epsilon_greedy = epsilon * np.exp(-decay_rate*episode)
 
     def reward(self, state, action, future_action_table):
-        reward = self.rewards_table[action]
-        estimate_of_optimal_future_value = np.max(self.q_table * future_action_table)
-        old_q_value = self.q_table[state, action]
-        delta_q = self.lr * (reward + self.gamma * estimate_of_optimal_future_value - old_q_value)
-        self.q_table[state, action] = old_q_value + delta_q
+        return
+        # reward = self.rewards_table[action]
+        # estimate_of_optimal_future_value = np.max(self.q_table * future_action_table)
+        # old_q_value = self.q_table[state, action]
+        # delta_q = self.lr * (reward + self.gamma * estimate_of_optimal_future_value - old_q_value)
+        # self.q_table[state, action] = old_q_value + delta_q
     

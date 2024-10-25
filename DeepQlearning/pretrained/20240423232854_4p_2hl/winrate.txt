@@ -1,0 +1,4 @@
+10000 games have been played DeepQlearning/pretrained/20240423232854/deep_q_agent_players_4.pkl
+winrate_2p=77.3% 
+winrate_3p=61.71% 
+winrate_4p=49.77%

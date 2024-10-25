@@ -1,6 +1,8 @@
 import ludopy
 import numpy as np
 import cv2
+import os
+import fnmatch
 import pickle
 
 def test(episodes, players, agent):
@@ -39,13 +41,31 @@ def test(episodes, players, agent):
             print(f"win rate: {100*wins/episode}%")
             
     print(f"final win rate: {100*wins/episodes}%")
+    return 100*wins/episodes
 
-episodes = 10000
-players = 2
-with open('pretrained/q_learning_agent.pkl', 'rb') as file:
-    agent = pickle.load(file)
-test(episodes, players, agent)
+def full_test(workdir, agent, episodes):
+    agent_pkl=None
+    with open(f"{workdir}/{agent}", 'rb') as file:
+        agent_pkl = pickle.load(file)
+    winrate_2 = test(episodes, 2, agent_pkl)
+    winrate_3 = test(episodes, 3, agent_pkl)
+    winrate_4 = test(episodes, 4, agent_pkl)
+    with open(f"{workdir}/winrate.txt", 'w') as file:
+        file.write(f"{episodes} games have been playd {agent}\n")
+        file.write(f"winrate_2p={winrate_2}% \n")
+        file.write(f"winrate_3p={winrate_3}% \n")
+        file.write(f"winrate_4p={winrate_4}%\n")
 
+
+# path = 'Qlearning/pretrained/20240525124255'
+# directories = [d for d in os.listdir(path)]
+# for dir in directories:
+#     workdir = path + "/" + dir
+#     agent = [f for f in os.listdir(workdir) if fnmatch.fnmatch(f, '*.pkl')][0]
+#     full_test(workdir, agent, 1000)
+
+
+full_test("Qlearning/pretrained/20240525180131", "q_agent_no_training.pkl", 10000)
 
 cv2.destroyAllWindows()
 

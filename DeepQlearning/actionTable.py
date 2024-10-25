@@ -8,7 +8,7 @@ class ActionTable():
         self.reset()       
 
     def reset(self):
-        self.action_table = np.full((self.actions), np.nan)
+        self.action_table = np.full((self.actions), -1)
 
     def update_action_table(self, action, piece_i):
         self.action_table[piece_i] = int(action.value)

@@ -4,6 +4,8 @@ import cv2
 import matplotlib.pyplot as plt
 from Qlearning.QLearningAgent import QLearningAgent
 import pickle
+import os
+from datetime import datetime
 
 def show_environment(title, g, scale):
     enviroment_image_rgb = g.render_environment() # RGB image of the enviroment
@@ -14,6 +16,19 @@ def show_environment(title, g, scale):
     resized_environment = cv2.resize(enviroment_image_bgr, (new_width, new_height))
     cv2.imshow(title, resized_environment)
     cv2.waitKey(0)
+    
+def save_arr_to_txt(file_path, data):
+    with open(file_path, 'w') as file:
+        for value in data:
+            file.write(str(value) + '\n')
+            
+def save_data(save_folder):
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+    with open(f"{save_folder}/q_agent_players_{players}_winrate_{sum(wins_list[-1000:])/1000}.pkl", 'wb') as file:
+        pickle.dump(agent, file)
+    save_arr_to_txt(f"{save_folder}/wins_list.txt", wins_list)
+    save_arr_to_txt(f"{save_folder}/epsilon_list.txt", epsilon_list)
 
 def plot_epsilon(list):
     plt.plot(list)
@@ -22,7 +37,8 @@ def plot_epsilon(list):
     plt.title('Change of epsilon')
     plt.show()
 
-def train(episodes, players, learning_rate, discount_factor, epsilon, decay, debug_actions = False):
+def train(agent, episodes, save_folder, players, learning_rate, discount_factor, epsilon, decay, debug_actions = False):
+    global epsilon_list, wins_list
     assert 2 <= players <= 4, "There must be between 2 and 4 players"
 
     if players == 2:
@@ -31,11 +47,6 @@ def train(episodes, players, learning_rate, discount_factor, epsilon, decay, deb
         g = ludopy.Game(ghost_players=[2])
     elif players == 4:
         g = ludopy.Game(ghost_players=[])
-    
-    agent = QLearningAgent(0, learning_rate, discount_factor, epsilon)
-    
-    wins = 0
-    epsilon_list = []
 
     # debug
     action_str = ""
@@ -66,31 +77,32 @@ def train(episodes, players, learning_rate, discount_factor, epsilon, decay, deb
             if agent.player_i == player_i and piece_to_move != -1:
                 agent.reward(g.players, [piece_to_move])
                 
-        if g.first_winner_was == agent.player_i:
-            wins += 1
-
+        # gather data
         agent.q_learning.update_epsilon(epsilon, decay, episode)
         epsilon_list.append(agent.q_learning.epsilon_greedy)
-        
+        wins_list.append(int(g.first_winner_was == agent.player_i))
         if episode % 100 == 0:
             print(f"episode: {episode}")
-            print(f"win rate: {wins}%")
-            wins = 0
+            print(f"epsilon: {agent.q_learning.epsilon_greedy}")
+            print(f"win rate: {sum(wins_list[-100:])}%")
 
-    # save the agent
-    with open('Qlearning/pretrained/q_learning_agent.pkl', 'wb') as file:
-        pickle.dump(agent, file)
-    plot_epsilon(epsilon_list)
+    save_data(save_folder)
 
-episodes = 1500
-players = 2
-learning_rate = 0.2
-discount_factor = 0.4 # importance of future rewards
+save_folder = f"Qlearning/pretrained/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+epsilon_list, wins_list = [], []
+episodes = 1
+players = 4
+learning_rates = [0.1, 0.01, 0.001]
+discount_factors = [0.95, 0.9, 0.8, 0.4] # importance of future rewards
 epsilon = 0.99
-decay = 0.005
-debug_actions = False
-train(episodes, players, learning_rate, discount_factor, epsilon, decay, debug_actions)
+decay = 0.003
 
+debug_actions = False
+for learning_rate in learning_rates:
+    for discount_factor in discount_factors:
+        agent = QLearningAgent(0, learning_rate, discount_factor, epsilon)
+        actual_save_folder = save_folder + f"/lr-{learning_rate}-df-{discount_factor}"
+        train(agent, episodes, actual_save_folder, players, learning_rate, discount_factor, epsilon, decay, debug_actions)
 
 cv2.destroyAllWindows()
 

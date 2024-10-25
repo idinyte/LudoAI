@@ -1,0 +1,3 @@
+10000 games have been playd <Qlearning.QLearningAgent.QLearningAgent object at 0x70c3bfe17fd0>
+winrate_2p=67.8% 
+winrate_4p=68.62%
